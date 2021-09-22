@@ -8,6 +8,7 @@ members = [
     "src/interval-tree",
     "src/langserver",
     "src/tools",
+    "src/opendreamffi"
 ]
 
 [profile.dev]
