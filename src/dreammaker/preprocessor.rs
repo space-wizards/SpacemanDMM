@@ -527,6 +527,18 @@ impl<'ctx> Preprocessor<'ctx> {
         self.annotations.take()
     }
 
+    pub fn maps(&self) -> &[PathBuf] {
+        &self.maps
+    }
+
+    pub fn skins(&self) -> &[PathBuf] {
+        &self.skins
+    }
+
+    pub fn scripts(&self) -> &[PathBuf] {
+        &self.scripts
+    }
+
     // ------------------------------------------------------------------------
     // Macro definition handling
 
