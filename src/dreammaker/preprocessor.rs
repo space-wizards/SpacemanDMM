@@ -412,6 +412,10 @@ impl<'ctx> HasLocation for Preprocessor<'ctx> {
 impl<'ctx> Preprocessor<'ctx> {
     /// Create a new preprocessor from the given Context and environment file.
     pub fn new(context: &'ctx Context, env_file: PathBuf) -> Result<Self, DMError> {
+        Self::new_with_builtins(context, env_file, DefineMap::with_builtins())
+    }
+
+    pub fn new_with_builtins(context: &'ctx Context, env_file: PathBuf, defines: DefineMap) -> Result<Self, DMError> {
         // Buffer the entire environment file. Large environments take a while
         // to load and locking it for the whole time is somewhat inconvenient.
         let include = Include::from_path(context, env_file.clone())?;
@@ -422,7 +426,7 @@ impl<'ctx> Preprocessor<'ctx> {
             include_stack: IncludeStack { stack: vec![include] },
             include_locations: Default::default(),
             history: Default::default(),
-            defines: DefineMap::with_builtins(),
+            defines,
             maps: Default::default(),
             skins: Default::default(),
             scripts: Default::default(),
