@@ -6,6 +6,7 @@ use std::path::Path;
 use linked_hash_map::LinkedHashMap;
 use ordered_float::OrderedFloat;
 use color_space::{Hsl, Hsv, Lch, Rgb};
+use serde::Serialize;
 
 use super::ast::*;
 use super::objtree::*;
@@ -15,7 +16,7 @@ use super::{Context, DMError, HasLocation, Location, Severity};
 /// An absolute typepath and optional variables.
 ///
 /// The path may involve `/proc` or `/verb` references.
-#[derive(Clone, Hash, Eq, PartialEq, Debug)]
+#[derive(Clone, Hash, Eq, PartialEq, Debug, Serialize)]
 pub struct Pop {
     pub path: TreePath,
     pub vars: LinkedHashMap<Ident, Constant>,
@@ -40,13 +41,14 @@ impl fmt::Display for Pop {
 ///
 /// This is intended to represent the degree to which constants are evaluated
 /// before being displayed in DreamMaker.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Constant {
     /// The literal `null`.
     Null(Option<TreePath>),
     /// A `new` call.
     New {
         /// The type to be instantiated.
+        #[serde(rename = "type")]
         type_: Option<Pop>,
         /// The list of arugments to pass to the `New()` proc.
         args: Option<Vec<(Constant, Option<Constant>)>>,
@@ -108,7 +110,7 @@ impl std::cmp::PartialEq for Constant {
 impl std::cmp::Eq for Constant {}
 
 /// The constant functions which are represented as-is.
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Serialize)]
 pub enum ConstFn {
     /// The `icon()` type constructor.
     Icon,

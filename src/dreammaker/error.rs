@@ -5,12 +5,13 @@ use std::path::{PathBuf, Path};
 use std::cell::{RefCell, Ref, RefMut};
 use std::collections::HashMap;
 
+use serde::{Serialize, Serializer};
 use termcolor::{ColorSpec, Color};
 
 use crate::config::Config;
 
 /// An identifier referring to a loaded file.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize)]
 pub struct FileId(u16);
 
 const FILEID_BUILTINS: FileId = FileId(0x0000);
@@ -272,7 +273,7 @@ impl Context {
 // Location handling
 
 /// File, line, and column information for an error.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Serialize)]
 pub struct Location {
     /// The index into the file table.
     pub file: FileId,
@@ -335,7 +336,7 @@ pub(crate) trait HasLocation {
 // Error handling
 
 /// The possible diagnostic severities available.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize)]
 pub enum Severity {
     Error = 1,
     Warning = 2,
@@ -374,7 +375,7 @@ impl fmt::Display for Severity {
 }
 
 /// A component which generated a diagnostic, when separation is desired.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
 pub enum Component {
     Unspecified,
     DreamChecker,
@@ -404,8 +405,16 @@ impl fmt::Display for Component {
     }
 }
 
+fn serialize_err<S>(cause: &Option<Box<dyn error::Error + Send + Sync>>, serializer: S) -> Result<S::Ok, S::Error> where S : Serializer {
+    if let Some(err) = cause {
+        serializer.serialize_str(&err.to_string())
+    } else {
+        serializer.serialize_none()
+    }
+}
+
 /// An error produced during DM parsing, with location information.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 #[must_use]
 pub struct DMError {
     location: Location,
@@ -413,12 +422,14 @@ pub struct DMError {
     component: Component,
     description: String,
     notes: Vec<DiagnosticNote>,
+    // TODO: Don't skip cause field.
+    #[serde(serialize_with="serialize_err")]
     cause: Option<Box<dyn error::Error + Send + Sync>>,
     errortype: Option<&'static str>,
 }
 
 /// An additional note attached to an error, at some other location.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DiagnosticNote {
     location: Location,
     description: String,

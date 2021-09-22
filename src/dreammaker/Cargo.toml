@@ -24,6 +24,7 @@ color_space = "0.5.3"
 [dependencies.linked-hash-map]
 git = "https://github.com/SpaceManiac/linked-hash-map"
 branch = "get-key-value"
+features = ["serde_impl"]
 
 [dev-dependencies]
 walkdir = "2.0.1"

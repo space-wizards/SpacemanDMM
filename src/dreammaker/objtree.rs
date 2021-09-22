@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use linked_hash_map::LinkedHashMap;
+use serde::Serialize;
 
 use super::ast::{Expression, VarType, VarSuffix, PathOp, Parameter, Block, ProcDeclKind, Ident};
 use super::constants::{Constant, Pop};
@@ -14,7 +15,7 @@ use super::{DMError, Location, Context, Severity};
 // Symbol IDs
 
 /// An identifier referring to a symbol in the object tree.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize)]
 pub struct SymbolId(u32);
 
 #[derive(Debug)]
@@ -46,31 +47,33 @@ impl SymbolIdSource {
 
 pub type Vars = LinkedHashMap<String, Constant>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct VarDeclaration {
     pub var_type: VarType,
     pub location: Location,
     pub id: SymbolId,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct VarValue {
     pub location: Location,
     /// Syntactic value, as specified in the source.
     pub expression: Option<Expression>,
     /// Evaluated value for non-static and non-tmp vars.
     pub constant: Option<Constant>,
+    #[serde(skip)]
     pub being_evaluated: bool,
+    #[serde(skip)]
     pub docs: DocCollection,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct TypeVar {
     pub value: VarValue,
     pub declaration: Option<VarDeclaration>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProcDeclaration {
     pub location: Location,
     pub kind: ProcDeclKind,
@@ -79,15 +82,16 @@ pub struct ProcDeclaration {
     pub is_protected: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProcValue {
     pub location: Location,
     pub parameters: Vec<Parameter>,
+    #[serde(skip)]
     pub docs: DocCollection,
     pub code: Code,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Code {
     Present(Block),
     Invalid(DMError),
@@ -95,7 +99,7 @@ pub enum Code {
     Disabled,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct TypeProc {
     pub value: Vec<ProcValue>,
     pub declaration: Option<ProcDeclaration>,
@@ -111,20 +115,25 @@ impl TypeProc {
 // ----------------------------------------------------------------------------
 // Types
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Type {
     pub name: String,
     pub path: String,
     pub location: Location,
+    #[serde(skip)]
     location_specificity: usize,
     /// Variables which this type has declarations or overrides for.
     pub vars: LinkedHashMap<String, TypeVar>,
     /// Procs and verbs which this type has declarations or overrides for.
     pub procs: LinkedHashMap<String, TypeProc>,
+    #[serde(skip)]
     parent_path: NodeIndex,
+    #[serde(skip)]
     parent_type: NodeIndex,
+    #[serde(skip)]
     pub docs: DocCollection,
     pub id: SymbolId,
+    #[serde(skip)]
     children: BTreeMap<String, NodeIndex>,
 }
 
@@ -1241,7 +1250,7 @@ fn is_decl(s: &str) -> bool {
 }
 
 /// Node identifier.
-#[derive(Copy, Clone, Default, PartialEq, PartialOrd, Eq, Ord, Hash, Debug)]
+#[derive(Copy, Clone, Default, PartialEq, PartialOrd, Eq, Ord, Hash, Debug, Serialize)]
 pub struct NodeIndex(u32);
 
 impl NodeIndex {
